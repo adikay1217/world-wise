@@ -1,0 +1,25 @@
+const EARTH_RADIUS_KM = 6371;
+const EARTH_CIRCUMFERENCE_KM = 20015; // max great-circle distance (antipodal)
+
+export function distKm(lat1, lon1, lat2, lon2) {
+  const toRad = Math.PI / 180;
+  const dLat = (lat2 - lat1) * toRad;
+  const dLon = (lon2 - lon1) * toRad;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * toRad) * Math.cos(lat2 * toRad) * Math.sin(dLon / 2) ** 2;
+  return EARTH_RADIUS_KM * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+export function bearingDeg(lat1, lon1, lat2, lon2) {
+  const toRad = Math.PI / 180;
+  const y = Math.sin((lon2 - lon1) * toRad) * Math.cos(lat2 * toRad);
+  const x =
+    Math.cos(lat1 * toRad) * Math.sin(lat2 * toRad) -
+    Math.sin(lat1 * toRad) * Math.cos(lat2 * toRad) * Math.cos((lon2 - lon1) * toRad);
+  return (Math.atan2(y, x) * (180 / Math.PI) + 360) % 360;
+}
+
+export function distancePercent(dist) {
+  return Math.min(1, dist / EARTH_CIRCUMFERENCE_KM);
+}
