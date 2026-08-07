@@ -86,7 +86,16 @@ export default function App() {
           puzzleNum={dailyGame.puzzleNum}
         />
 
-        {active.gameOver && !active.showModal && <ShowResultButton onClick={active.openModal} />}
+        {active.gameOver && !active.showModal && (
+          <div className="gc-floating-actions">
+            <ShowResultButton onClick={active.openModal} />
+            {mode === 'endless' && (
+              <button className="gc-play-again-float" onClick={endlessGame.startNewRound}>
+                Play again
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

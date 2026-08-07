@@ -578,10 +578,14 @@ button {
   border-radius: 10px;
 }
 
-.gc-show-result {
+.gc-floating-actions {
   position: fixed;
   bottom: 24px;
   right: 24px;
+  display: flex;
+  gap: 10px;
+}
+.gc-show-result {
   background: var(--text);
   color: #fff;
   font: 600 13px 'Figtree', sans-serif;
@@ -592,4 +596,16 @@ button {
 }
 .gc-show-result:hover {
   background: #453a34;
+}
+.gc-play-again-float {
+  background: var(--accent);
+  color: #fff;
+  font: 600 13px 'Figtree', sans-serif;
+  padding: 11px 18px;
+  border-radius: 999px;
+  border: none;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+}
+.gc-play-again-float:hover {
+  background: var(--accent-hover);
 }
