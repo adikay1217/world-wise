@@ -468,7 +468,17 @@ button {
   flex: none;
 }
 
-/* AI agent post-game facts */
+/* post-game facts */
+@keyframes gcAgentSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 .gc-agent {
   margin-top: 8px;
   padding: 14px;
@@ -478,7 +488,6 @@ button {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  animation: gcPop 0.3s ease;
 }
 .gc-agent-title {
   font: 700 13px 'Figtree', sans-serif;
@@ -488,6 +497,8 @@ button {
   display: flex;
   flex-direction: column;
   gap: 3px;
+  opacity: 0;
+  animation: gcAgentSlideIn 0.4s ease forwards;
 }
 .gc-agent-fact-label {
   font: 600 10px 'Figtree', sans-serif;
@@ -654,4 +665,78 @@ button {
 }
 .gc-play-again-float:hover {
   background: var(--accent-hover);
+}
+
+/* ============================================================
+   Mobile layout (small form factor) — see MobileLayout.jsx.
+   This is a genuinely different composition, not the desktop
+   1280x800 stage scaled down: everything stacks full-width and
+   the page scrolls naturally instead of being letterboxed.
+   ============================================================ */
+.gc-m-app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+.gc-m-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 14px;
+  gap: 14px;
+}
+.gc-m-map-wrap {
+  height: min(56vh, 480px);
+  display: flex;
+  border-radius: 16px;
+  overflow: hidden;
+}
+.gc-m-sidebar {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+@media (max-width: 700px) {
+  .gc-header {
+    padding: 14px 16px;
+  }
+  .gc-header-left {
+    flex-wrap: wrap;
+    row-gap: 8px;
+    white-space: normal;
+    align-items: center;
+  }
+  .gc-title {
+    font-size: 20px;
+  }
+  .gc-search {
+    max-width: none;
+  }
+
+  /* bottom-sheet result modal */
+  .gc-modal-backdrop {
+    align-items: flex-end;
+  }
+  .gc-modal {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 20px 20px 0 0;
+    padding: 26px 20px 20px;
+  }
+  .gc-modal-actions {
+    flex-direction: column;
+  }
+
+  .gc-floating-actions {
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+    justify-content: flex-end;
+  }
 }

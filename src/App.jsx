@@ -7,20 +7,25 @@ import GuessList from './components/GuessList.jsx';
 import AiAgentFacts from './components/AiAgentFacts.jsx';
 import ResultModal from './components/ResultModal.jsx';
 import ShowResultButton from './components/ShowResultButton.jsx';
+import MobileLayout from './components/MobileLayout.jsx';
 import { useGameState } from './hooks/useGameState.js';
 import { useEndlessGameState } from './hooks/useEndlessGameState.js';
 import { useFitScale } from './hooks/useFitScale.js';
 import { useAuth } from './hooks/useAuth.js';
+import { useIsMobile } from './hooks/useIsMobile.js';
 
 // Reference design size the whole game is laid out at; useFitScale scales
 // this single fixed composition uniformly to fit any viewport, so nothing
-// (including the proximity legend) ever requires scrolling to see.
+// (including the proximity legend) ever requires scrolling to see. Only
+// applies above the mobile breakpoint — see MobileLayout.jsx for why phones
+// get a genuinely different, naturally-scrolling layout instead.
 const STAGE_WIDTH = 1280;
 const STAGE_HEIGHT = 800;
 
 export default function App() {
   const { user, authReady, signIn, signOut, isConfigured } = useAuth();
   const [mode, setMode] = useState('daily');
+  const isMobile = useIsMobile();
   // Both modes stay mounted regardless of which is active (Rules of Hooks,
   // and it's cheap) — switching the toggle just swaps which one feeds the
   // shared UI below, so each mode's map coloring/guesses/modal state stays
@@ -42,6 +47,25 @@ export default function App() {
     () => new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }),
     []
   );
+
+  if (isMobile) {
+    return (
+      <MobileLayout
+        mode={mode}
+        onModeChange={setMode}
+        dateLabel={dateLabel}
+        puzzleNum={dailyGame.puzzleNum}
+        user={user}
+        authReady={authReady}
+        isConfigured={isConfigured}
+        onSignIn={signIn}
+        onSignOut={signOut}
+        active={active}
+        guessedIds={guessedIds}
+        onPlayAgain={endlessGame.startNewRound}
+      />
+    );
+  }
 
   return (
     <div className="gc-stage">

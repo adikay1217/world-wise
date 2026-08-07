@@ -55,15 +55,24 @@ the target, until the right country is found or you run out of guesses (6).
   quirks that forced that approach (StrictMode double-invoking state
   updaters, `dangerouslySetInnerHTML` re-applying on every re-render,
   `setPointerCapture` breaking click hit-testing).
-- **Fit-to-screen layout**: the whole game is laid out at a fixed 1280×800
-  reference size and uniformly scaled to fit any viewport
-  (`src/hooks/useFitScale.js`), so nothing — including the proximity legend —
-  ever requires scrolling to see, on any screen size.
+- **Fit-to-screen layout (desktop/tablet)**: above the mobile breakpoint
+  (700px), the whole game is laid out at a fixed 1280×800 reference size and
+  uniformly scaled to fit any viewport (`src/hooks/useFitScale.js`), so
+  nothing — including the proximity legend — ever requires scrolling to see.
+- **Mobile layout**: below 700px wide, `App.jsx` renders
+  `src/components/MobileLayout.jsx` instead — a genuinely different,
+  naturally-scrolling composition (stacked full-width sections, a
+  bottom-sheet result modal) rather than a shrunk-down copy of the desktop
+  one, so touch targets and text stay a real, usable size. Reuses the exact
+  same `MapView`/`SearchBox`/`GuessList`/`ResultModal`/etc. components and
+  game-state hooks as desktop — only the surrounding layout differs
+  (`src/hooks/useIsMobile.js` picks which branch renders).
 - **Share result**: a Wordle-style emoji-grid string copied to the clipboard,
   labeled with the puzzle number (daily) or "(Endless)".
-- **AI Agent briefing**: once a round ends (won or lost), a sidebar card
-  reveals population, GDP, primary language(s), and neighboring countries
-  for the target (`src/components/AiAgentFacts.jsx`, data in
+- **Post-game facts**: once a round ends (won or lost), a sidebar card
+  ("Facts about {country}", each stat sliding in in sequence) reveals
+  population, GDP, primary language(s), and neighboring countries for the
+  target (`src/components/AiAgentFacts.jsx`, data in
   `src/data/countryFacts.js`). Stays visible even after closing the result
   modal — persistent for the round, not tied to the modal being open. This
   is real data (World Bank population/GDP + Wikidata official
