@@ -18,12 +18,13 @@ function useCountdown() {
   return formatCountdown(ms);
 }
 
-export default function ResultModal({ show, onClose, gameState, target, guesses, stats, puzzleNum }) {
+export default function ResultModal({ mode, show, onClose, onPlayAgain, gameState, target, guesses, stats, puzzleNum }) {
   const countdown = useCountdown();
   const [shareLabel, setShareLabel] = useState('Share result');
   if (!show) return null;
 
   const won = gameState === 'won';
+  const isDaily = mode === 'daily';
 
   function share() {
     const grid = guesses
@@ -31,7 +32,8 @@ export default function ResultModal({ show, onClose, gameState, target, guesses,
       .reverse()
       .map((_, i) => SHARE_EMOJI[Math.min(i, 5)])
       .join('');
-    const text = `World Wise #${puzzleNum} ${won ? guesses.length : 'X'}/6\n${grid}`;
+    const label = isDaily ? `World Wise #${puzzleNum}` : 'World Wise (Endless)';
+    const text = `${label} ${won ? guesses.length : 'X'}/6\n${grid}`;
     if (navigator.clipboard) {
       navigator.clipboard
         .writeText(text)
@@ -54,7 +56,11 @@ export default function ResultModal({ show, onClose, gameState, target, guesses,
         </div>
         <div className="gc-modal-target">{target.name}</div>
         <div className="gc-modal-sub">
-          {won ? `Solved in ${guesses.length} guess${guesses.length === 1 ? '' : 'es'}` : 'Better luck on the next globe'}
+          {won
+            ? `Solved in ${guesses.length} guess${guesses.length === 1 ? '' : 'es'}`
+            : isDaily
+              ? 'Better luck on the next globe'
+              : 'Better luck next round'}
         </div>
         <div className="gc-modal-chips">
           {guesses.map((g) => (
@@ -81,7 +87,13 @@ export default function ResultModal({ show, onClose, gameState, target, guesses,
           <button className="gc-modal-share" onClick={share}>
             {shareLabel}
           </button>
-          <div className="gc-modal-countdown">Next globe: {countdown}</div>
+          {isDaily ? (
+            <div className="gc-modal-countdown">Next globe: {countdown}</div>
+          ) : (
+            <button className="gc-modal-share" onClick={onPlayAgain}>
+              Play again
+            </button>
+          )}
         </div>
       </div>
     </div>

@@ -103,8 +103,21 @@ export function useGameState(user) {
   const dateKey = useMemo(() => todayKey(), []);
   const target = useMemo(() => pickTarget(countryIds, dateKey), [dateKey]);
 
-  const [game, setGame] = useState(() => loadSaved(dateKey, target));
-  const [stats, setStats] = useState(loadStats);
+  // stats live inside the same state object as the round (not a separate
+  // useState) so a finished round can be scored in a single, pure updater —
+  // no setState call nested inside another updater's callback. Nesting them
+  // used to work only by accident: React StrictMode double-invokes updater
+  // functions in development to catch impure code, so a nested setStats
+  // call fires twice per finish; the only reason it didn't double-count here
+  // was the `lastPlayed === dateKey` guard rejecting the second, redundant
+  // invocation. Keeping that guard (it's still meaningful — don't recount an
+  // already-finished day) but no longer relying on it to mask the nesting
+  // bug, since the sibling endless-mode hook doesn't have a date to guard
+  // with and hit the bug directly.
+  const [state, setState] = useState(() => ({
+    ...loadSaved(dateKey, target),
+    stats: loadStats(),
+  }));
 
   // Load stats for whichever identity is current: Firestore when signed in,
   // localStorage otherwise. On a user's very first sign-in (no Firestore doc
@@ -112,7 +125,7 @@ export function useGameState(user) {
   // guest progress isn't discarded.
   useEffect(() => {
     if (!user || !db) {
-      setStats(loadStats());
+      setState((prev) => ({ ...prev, stats: loadStats() }));
       return;
     }
     let cancelled = false;
@@ -122,11 +135,11 @@ export function useGameState(user) {
         const snap = await getDoc(ref);
         if (cancelled) return;
         if (snap.exists()) {
-          setStats(snap.data());
+          setState((prev) => ({ ...prev, stats: snap.data() }));
         } else {
           const seed = loadStats();
           await setDoc(ref, seed);
-          if (!cancelled) setStats(seed);
+          if (!cancelled) setState((prev) => ({ ...prev, stats: seed }));
         }
       } catch (err) {
         console.error('[stats] Firestore load failed, staying on local stats:', err);
@@ -143,19 +156,19 @@ export function useGameState(user) {
         STATE_KEY,
         JSON.stringify({
           date: dateKey,
-          target: game.target,
-          guesses: game.guesses,
-          gameState: game.gameState,
-          dismissed: !game.showModal,
+          target: state.target,
+          guesses: state.guesses,
+          gameState: state.gameState,
+          dismissed: !state.showModal,
         })
       );
     } catch {
       // storage unavailable — persistence is best-effort
     }
-  }, [dateKey, game]);
+  }, [dateKey, state]);
 
   function handleGuess(id) {
-    setGame((prev) => {
+    setState((prev) => {
       if (prev.gameState !== 'playing') return prev;
       if (!countries[id]) return prev;
       if (prev.guesses.some((g) => g.id === id)) return prev;
@@ -166,44 +179,41 @@ export function useGameState(user) {
       const gameState = won ? 'won' : guesses.length >= MAX_GUESSES ? 'lost' : 'playing';
       const finished = gameState !== 'playing';
 
-      if (finished) {
-        setStats((s) => {
-          if (s.lastPlayed === dateKey) return s;
-          const played = (s.played || 0) + 1;
-          const totalGuesses = (s.totalGuesses || 0) + guesses.length;
-          const next = {
-            streak: won ? (s.streak || 0) + 1 : 0,
-            played,
-            totalGuesses,
-            avg: (totalGuesses / played).toFixed(1),
-            lastPlayed: dateKey,
-          };
-          persistStats(next, user);
-          return next;
-        });
+      let stats = prev.stats;
+      if (finished && prev.stats.lastPlayed !== dateKey) {
+        const played = (prev.stats.played || 0) + 1;
+        const totalGuesses = (prev.stats.totalGuesses || 0) + guesses.length;
+        stats = {
+          streak: won ? (prev.stats.streak || 0) + 1 : 0,
+          played,
+          totalGuesses,
+          avg: (totalGuesses / played).toFixed(1),
+          lastPlayed: dateKey,
+        };
+        persistStats(stats, user);
       }
 
-      return { ...prev, guesses, gameState, showModal: finished };
+      return { ...prev, guesses, gameState, showModal: finished, stats };
     });
   }
 
   function closeModal() {
-    setGame((prev) => ({ ...prev, showModal: false }));
+    setState((prev) => ({ ...prev, showModal: false }));
   }
   function openModal() {
-    setGame((prev) => ({ ...prev, showModal: true }));
+    setState((prev) => ({ ...prev, showModal: true }));
   }
 
   return {
     dateKey,
     puzzleNum: puzzleNumber(dateKey),
-    target: countries[game.target],
-    targetId: game.target,
-    guesses: game.guesses,
-    gameState: game.gameState,
-    gameOver: game.gameState !== 'playing',
-    showModal: game.showModal,
-    stats,
+    target: countries[state.target],
+    targetId: state.target,
+    guesses: state.guesses,
+    gameState: state.gameState,
+    gameOver: state.gameState !== 'playing',
+    showModal: state.showModal,
+    stats: state.stats,
     handleGuess,
     closeModal,
     openModal,

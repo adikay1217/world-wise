@@ -12,6 +12,14 @@ export function pickTarget(ids, dateKey) {
   return ids[hashString(dateKey) % ids.length];
 }
 
+export function pickRandomTarget(ids, excludeId) {
+  let id = ids[Math.floor(Math.random() * ids.length)];
+  while (id === excludeId && ids.length > 1) {
+    id = ids[Math.floor(Math.random() * ids.length)];
+  }
+  return id;
+}
+
 export function puzzleNumber(dateKey) {
   return Math.floor(new Date(dateKey).getTime() / 86400000) % 1000;
 }

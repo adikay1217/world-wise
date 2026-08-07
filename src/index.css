@@ -113,11 +113,6 @@ button {
   flex-wrap: wrap;
   gap: 12px;
 }
-.gc-subtitle {
-  margin-top: 4px;
-  font: 500 12px 'Figtree', sans-serif;
-  color: var(--text-muted);
-}
 .gc-header-left {
   display: flex;
   align-items: baseline;
@@ -132,7 +127,34 @@ button {
   font: 500 13px 'Figtree', sans-serif;
   color: var(--text-muted);
 }
+.gc-mode-toggle {
+  display: flex;
+  background: var(--input-bg);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 999px;
+  padding: 2px;
+  gap: 2px;
+}
+.gc-mode-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font: 600 12px 'Figtree', sans-serif;
+  padding: 5px 12px;
+  border-radius: 999px;
+}
+.gc-mode-btn:hover {
+  color: var(--text);
+}
+.gc-mode-btn-active {
+  background: var(--accent);
+  color: #fff;
+}
+.gc-mode-btn-active:hover {
+  color: #fff;
+}
 .gc-info-badge {
+  position: relative;
   width: 18px;
   height: 18px;
   border-radius: 50%;
@@ -143,6 +165,28 @@ button {
   font: 600 11px serif;
   color: rgba(0, 0, 0, 0.45);
   flex: none;
+}
+.gc-info-tooltip {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 260px;
+  background: var(--text);
+  color: #fff;
+  font: 600 12px 'Figtree', sans-serif;
+  line-height: 1.45;
+  white-space: normal;
+  padding: 8px 12px;
+  border-radius: 6px;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  z-index: 20;
+}
+.gc-info-badge:hover .gc-info-tooltip {
+  opacity: 1;
+  visibility: visible;
 }
 .gc-header-right {
   display: flex;

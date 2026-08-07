@@ -1,6 +1,8 @@
 import AuthButton from './AuthButton.jsx';
 
 export default function Header({
+  mode,
+  onModeChange,
   dateLabel,
   puzzleNum,
   streak,
@@ -16,14 +18,33 @@ export default function Header({
       <div className="gc-header-row">
         <div className="gc-header-left">
           <div className="gc-title">World Wise</div>
-          <div className="gc-date">
-            {dateLabel} · #{puzzleNum}
+          <div className="gc-mode-toggle">
+            <button
+              className={mode === 'daily' ? 'gc-mode-btn gc-mode-btn-active' : 'gc-mode-btn'}
+              onClick={() => onModeChange('daily')}
+            >
+              Daily
+            </button>
+            <button
+              className={mode === 'endless' ? 'gc-mode-btn gc-mode-btn-active' : 'gc-mode-btn'}
+              onClick={() => onModeChange('endless')}
+            >
+              Endless
+            </button>
           </div>
-          <div
-            className="gc-info-badge"
-            title="Guess the mystery country. After each guess, the map colors by how close you were — pale yellow is far, deep red is hot, green means you found it."
-          >
+          {mode === 'daily' ? (
+            <div className="gc-date">
+              {dateLabel} · #{puzzleNum}
+            </div>
+          ) : (
+            <div className="gc-date">Endless practice</div>
+          )}
+          <div className="gc-info-badge">
             i
+            <span className="gc-info-tooltip">
+              Click a country on the map or type its name to find the right one. After each guess, the map colors by
+              how close you were — pale yellow is far, deep red is hot, green means you found it.
+            </span>
           </div>
         </div>
         <div className="gc-header-right">
@@ -42,7 +63,6 @@ export default function Header({
           </div>
         </div>
       </div>
-      <div className="gc-subtitle">Click a country on the map or type its name to find the right one.</div>
     </header>
   );
 }

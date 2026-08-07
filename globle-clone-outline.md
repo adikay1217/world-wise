@@ -1,82 +1,70 @@
-# Globle Clone — Project Outline
+# World Wise — Project Overview
 
-## Concept
-A daily country-guessing game. Every day, a target country is chosen (same for
-all players, deterministic by date). Players click countries on a 2D world
-map; each guess is colored/shaded by proximity and shows the direction to the
-target, until the correct country is found.
+A country-guessing game inspired by Globle. Two ways to play:
+
+- **Daily** — one target country per calendar day, shared by every player
+  (deterministic from the date). Streak/played/avg stats build up day over
+  day, the same as Wordle-style dailies.
+- **Endless** — pick a random country and go, any time, as many rounds in a
+  row as you want. Its own separate streak/played/avg, unrelated to the
+  daily numbers.
+
+In both modes: click countries on the world map (or type a name in the
+search box); each guess is colored by proximity and shows the direction to
+the target, until the right country is found or you run out of guesses (6).
 
 ## Tech Stack
-- **React** — UI and game state
-- **react-simple-maps** — SVG map rendering from GeoJSON/TopoJSON
-- **d3-geo** (comes with react-simple-maps) — projections, centroid math
-- Country boundary data: [Natural Earth](https://www.naturalearthdata.com/) or
-  the `world-atlas` npm package (pre-built TopoJSON, includes country
-  centroids/properties)
-- No backend required initially — daily seed can be derived client-side from
-  the date; state persists in `localStorage`
+- **Vite + React** (plain JS) — UI and game state.
+- **Raw inline SVG world map** (`src/assets/world-map.svg`, `<path id="xx">`
+  per ISO 3166-1 alpha-2 country code) + a matching `{name, lat, lon}`
+  centroid table (`src/data/countries.js`) — no map library
+  (`react-simple-maps`/`world-atlas`, as originally considered, weren't
+  needed once a hand-authored SVG + centroid data were available).
+- **Firebase Auth** (Google sign-in) + **Firestore** — optional sign-in;
+  signed-in players get their *daily* stats synced across devices. Endless
+  stats and the in-progress round for both modes stay in the browser's
+  `localStorage` only. The app runs fully as a guest with no Firebase project
+  configured at all (see `.env.example`).
+- Hosted on Vercel.
 
-## Core Game Loop
-1. On load, compute today's date → deterministic seed → pick target country
-   from country list (same formula for every player = shared daily puzzle)
-2. Player clicks a country shape on the map
-3. App looks up guessed country's centroid (lat/lng) and computes:
-   - **Distance** (haversine formula, target vs. guess centroid)
-   - **Direction** (bearing formula, guess → target)
-4. Guessed country is shaded on the map by proximity (color scale: far = cool,
-   close = warm) and added to a guess list/sidebar with distance + arrow icon
-5. Repeat until correct country is guessed
-6. Win screen: number of guesses, option to share results (Wordle-style
-   emoji/text summary), countdown to next day's puzzle
+## How it works
+- **Daily target**: `todayKey()` → a deterministic hash of the date picks the
+  target from the country list — same country for every player on a given
+  day (`src/lib/dailyPuzzle.js`, `pickTarget`).
+- **Endless target**: `pickRandomTarget()` picks uniformly at random, only
+  constrained to not repeat the round you just finished.
+- **Distance/direction**: haversine distance and initial-bearing formulas
+  (`src/lib/geo.js`) between the guessed country's centroid and the target's.
+- **Proximity color**: an OKLCH gradient from pale yellow (far) to deep red
+  (close), green on the correct answer (`src/lib/color.js`).
+- **Game state**: `useGameState` (daily) and `useEndlessGameState` (endless)
+  in `src/hooks/` — same shape (`target`, `guesses`, `gameState`, `stats`,
+  `handleGuess`, ...), each persisted under its own `localStorage` keys
+  (`globle_state`/`globle_stats` vs `globle_endless_state`/
+  `globle_endless_stats`) so reloading mid-round never loses progress.
+  `App.jsx` runs both hooks simultaneously and a header toggle just picks
+  which one feeds the shared UI — so switching modes mid-session preserves
+  each mode's guesses/map coloring independently.
+- **Click hit-detection**: the SVG is injected once, imperatively, into the
+  map container; a single delegated click listener resolves the clicked
+  `<path>`/`<g>` id back to a country.
+- **Map zoom/pan**: wheel-to-zoom (toward the cursor) and drag-to-pan,
+  implemented with native DOM listeners rather than React state for the
+  parts that need to stay perfectly in sync with pointer position — see the
+  comments in `src/components/MapView.jsx` for the specific browser/React
+  quirks that forced that approach (StrictMode double-invoking state
+  updaters, `dangerouslySetInnerHTML` re-applying on every re-render,
+  `setPointerCapture` breaking click hit-testing).
+- **Fit-to-screen layout**: the whole game is laid out at a fixed 1280×800
+  reference size and uniformly scaled to fit any viewport
+  (`src/hooks/useFitScale.js`), so nothing — including the proximity legend —
+  ever requires scrolling to see, on any screen size.
+- **Share result**: a Wordle-style emoji-grid string copied to the clipboard,
+  labeled with the puzzle number (daily) or "(Endless)".
 
-## Feature Breakdown (build order)
-
-### Phase 1 — Static map + data
-- [ ] Set up React app, install react-simple-maps + world-atlas
-- [ ] Render world map with country borders
-- [ ] Load/parse country list with centroids (lat/lng) and names
-- [ ] Click handler on a country → log its name/id to console
-
-### Phase 2 — Game logic (no daily seed yet, just random)
-- [ ] Pick random target country on load
-- [ ] Implement haversine distance function
-- [ ] Implement bearing/direction function (return compass direction or arrow angle)
-- [ ] On click: compute distance + direction from clicked country to target
-- [ ] Display guess in a list (country name, distance, direction arrow)
-- [ ] Detect win condition (guessed country === target)
-
-### Phase 3 — Visual feedback
-- [ ] Color-scale shading of guessed countries by proximity (closer = warmer)
-- [ ] Highlight/disable already-guessed countries
-- [ ] Win screen / modal with guess count
-
-### Phase 4 — Daily puzzle logic
-- [ ] Deterministic seed function based on current date (e.g. days since
-      epoch → index into country list)
-- [ ] Persist today's guesses in localStorage, keyed by date
-- [ ] Countdown timer to next day's reset (local midnight)
-- [ ] Reload should restore in-progress guesses for today, not reset
-
-### Phase 5 — Polish
-- [ ] Share button (generate Wordle-style result string)
-- [ ] Mobile-friendly map interaction (touch, zoom/pan)
-- [ ] Tooltip on hover showing country name before clicking
-- [ ] Handle edge cases: tiny countries hard to click, disputed territories,
-      countries with multiple non-contiguous parts (e.g. USA + Alaska)
-
-## Key Technical Notes
-- **Distance formula (haversine)**: standard great-circle distance between two
-  lat/lng points — a few lines of math, no external library needed
-- **Direction formula (bearing)**: computed from same two lat/lng points,
-  convert result to either a compass label (N, NE, SE...) or a rotation angle
-  for an arrow icon
-- **Click hit-detection**: react-simple-maps' `<Geography>` components each
-  correspond to one country feature from the TopoJSON — click handlers attach
-  directly per-country, no manual coordinate math needed
-- **Small-country problem**: since guessing is map-click only (no search
-  fallback), consider a zoom feature or click-tolerance boost for tiny
-  countries (e.g. Vatican, Singapore) so the game stays playable
-
-## Open Questions / Later Decisions
-- Exact color scale for proximity shading
-- Share-result text format
+## Known small gaps
+- Endless stats don't sync to Firestore even when signed in (daily-only for
+  now).
+- No handling yet for disputed territories / countries without an ISO code
+  beyond what the source SVG already labels (e.g. Somaliland uses a
+  non-ISO `_`-prefixed id and isn't guessable).
