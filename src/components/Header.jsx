@@ -7,6 +7,8 @@ export default function Header({
   puzzleNum,
   streak,
   guessCountLabel,
+  hardMode,
+  onHardModeChange,
   user,
   authReady,
   isConfigured,
@@ -46,6 +48,13 @@ export default function Header({
               how close you were — pale yellow is far, deep red is hot, green means you found it.
             </span>
           </div>
+          <label className="gc-hardmode-toggle" title="Hides the direction arrow on guesses">
+            <input type="checkbox" checked={hardMode} onChange={(e) => onHardModeChange(e.target.checked)} />
+            <span className="gc-hardmode-track">
+              <span className="gc-hardmode-thumb" />
+            </span>
+            Hard mode
+          </label>
         </div>
         <div className="gc-header-right">
           <AuthButton

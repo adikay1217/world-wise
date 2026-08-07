@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { msUntilNextUtcMidnight } from '../lib/dailyPuzzle.js';
 import { SHARE_EMOJI } from '../lib/color.js';
+import AiAgentFacts from './AiAgentFacts.jsx';
 
 function formatCountdown(ms) {
   const h = String(Math.floor(ms / 3600000)).padStart(2, '0');
@@ -18,7 +19,18 @@ function useCountdown() {
   return formatCountdown(ms);
 }
 
-export default function ResultModal({ mode, show, onClose, onPlayAgain, gameState, target, guesses, stats, puzzleNum }) {
+export default function ResultModal({
+  mode,
+  show,
+  onClose,
+  onPlayAgain,
+  gameState,
+  target,
+  targetId,
+  guesses,
+  stats,
+  puzzleNum,
+}) {
   const countdown = useCountdown();
   const [shareLabel, setShareLabel] = useState('Share result');
   if (!show) return null;
@@ -83,6 +95,7 @@ export default function ResultModal({ mode, show, onClose, onPlayAgain, gameStat
             <div className="gc-modal-stat-label">avg guesses</div>
           </div>
         </div>
+        <AiAgentFacts targetId={targetId} />
         <div className="gc-modal-actions">
           <button className="gc-modal-share" onClick={share}>
             {shareLabel}

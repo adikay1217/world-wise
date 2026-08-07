@@ -1,4 +1,4 @@
-export default function GuessList({ guesses }) {
+export default function GuessList({ guesses, hardMode }) {
   return (
     <>
       <div className="gc-sidebar-title">Guess history</div>
@@ -12,7 +12,7 @@ export default function GuessList({ guesses }) {
             <span className="gc-guess-dist">{g.distLabel}</span>
           </div>
           {g.isWin && <span className="gc-guess-star">★</span>}
-          {g.isDirectional && (
+          {g.isDirectional && !hardMode && (
             <span className="gc-guess-arrow" style={{ transform: `rotate(${g.bearing}deg)` }}>
               <svg viewBox="0 0 24 24" width="17" height="17">
                 <path d="M12 2 L19.5 21 Q12 15.5 4.5 21 Z" fill="#2b2320" opacity=".62" />

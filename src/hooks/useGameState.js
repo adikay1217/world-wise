@@ -60,6 +60,27 @@ function loadStats() {
   return { streak: 0, played: 0, avg: '0.0', totalGuesses: 0, lastPlayed: null };
 }
 
+// A player can sign in before, during, or after today's round — "after"
+// (played as a guest, then signed in) is the tricky one: their local
+// finished result for today has to be folded into whatever's already in
+// the cloud, not silently discarded by the cloud fetch, and not
+// double-counted if the cloud already has today's result (e.g. they signed
+// in once already, or played on another device today first). `cloudStats`
+// is treated as the source of truth for everything except today.
+function mergeTodayIntoCloudStats(cloudStats, dateKey, todayFinished, todayWon, todayGuessCount) {
+  const base = cloudStats ?? { streak: 0, played: 0, avg: '0.0', totalGuesses: 0, lastPlayed: null };
+  if (!todayFinished || base.lastPlayed === dateKey) return base;
+  const played = (base.played || 0) + 1;
+  const totalGuesses = (base.totalGuesses || 0) + todayGuessCount;
+  return {
+    streak: todayWon ? (base.streak || 0) + 1 : 0,
+    played,
+    totalGuesses,
+    avg: (totalGuesses / played).toFixed(1),
+    lastPlayed: dateKey,
+  };
+}
+
 // Signed-in players get their stats stored in Firestore (`users/{uid}`) so
 // they follow across devices; signed-out play keeps using localStorage
 // exactly as before. Firestore failures fall back to whatever's already in
@@ -120,9 +141,17 @@ export function useGameState(user) {
   }));
 
   // Load stats for whichever identity is current: Firestore when signed in,
-  // localStorage otherwise. On a user's very first sign-in (no Firestore doc
-  // yet), seed their cloud doc from whatever's already in localStorage so
-  // guest progress isn't discarded.
+  // localStorage otherwise.
+  //
+  // Signing in can happen before, during, or after today's round:
+  //  - before/during: today isn't finished yet locally, so there's nothing
+  //    to merge — just adopt the cloud's stats (or seed a brand-new doc from
+  //    local history, for a guest's very first sign-in) and let the normal
+  //    handleGuess -> persistStats path write today's result once it's over.
+  //  - after: today already finished as a guest before signing in. A
+  //    returning user's cloud doc might not reflect that yet, so it has to
+  //    be folded in here — a plain "load whatever's in the cloud" would
+  //    silently discard the result that was just earned.
   useEffect(() => {
     if (!user || !db) {
       setState((prev) => ({ ...prev, stats: loadStats() }));
@@ -134,13 +163,21 @@ export function useGameState(user) {
         const ref = doc(db, 'users', user.uid);
         const snap = await getDoc(ref);
         if (cancelled) return;
-        if (snap.exists()) {
-          setState((prev) => ({ ...prev, stats: snap.data() }));
-        } else {
-          const seed = loadStats();
-          await setDoc(ref, seed);
-          if (!cancelled) setState((prev) => ({ ...prev, stats: seed }));
-        }
+        const cloudStats = snap.exists() ? snap.data() : null;
+
+        setState((prev) => {
+          const finishedToday = prev.gameState !== 'playing';
+          const merged = cloudStats
+            ? mergeTodayIntoCloudStats(cloudStats, dateKey, finishedToday, prev.gameState === 'won', prev.guesses.length)
+            : loadStats(); // first-ever sign-in: seed from this device's local history (already includes today, if finished)
+
+          if (!cloudStats || merged.lastPlayed !== cloudStats.lastPlayed) {
+            setDoc(ref, merged).catch((err) => {
+              console.error('[stats] failed to save merged stats to Firestore:', err);
+            });
+          }
+          return { ...prev, stats: merged };
+        });
       } catch (err) {
         console.error('[stats] Firestore load failed, staying on local stats:', err);
       }
@@ -148,7 +185,7 @@ export function useGameState(user) {
     return () => {
       cancelled = true;
     };
-  }, [user]);
+  }, [user, dateKey]);
 
   useEffect(() => {
     try {

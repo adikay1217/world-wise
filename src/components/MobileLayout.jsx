@@ -3,7 +3,6 @@ import SearchBox from './SearchBox.jsx';
 import MapView from './MapView.jsx';
 import ProximityLegend from './ProximityLegend.jsx';
 import GuessList from './GuessList.jsx';
-import AiAgentFacts from './AiAgentFacts.jsx';
 import ResultModal from './ResultModal.jsx';
 import ShowResultButton from './ShowResultButton.jsx';
 
@@ -20,6 +19,8 @@ export default function MobileLayout({
   onModeChange,
   dateLabel,
   puzzleNum,
+  hardMode,
+  onHardModeChange,
   user,
   authReady,
   isConfigured,
@@ -38,6 +39,8 @@ export default function MobileLayout({
         puzzleNum={puzzleNum}
         streak={active.stats.streak}
         guessCountLabel={`${active.guesses.length}/6`}
+        hardMode={hardMode}
+        onHardModeChange={onHardModeChange}
         user={user}
         authReady={authReady}
         isConfigured={isConfigured}
@@ -58,8 +61,7 @@ export default function MobileLayout({
         <ProximityLegend />
 
         <div className="gc-m-sidebar">
-          <GuessList guesses={active.guesses} />
-          {active.gameOver && <AiAgentFacts targetId={active.targetId} />}
+          <GuessList guesses={active.guesses} hardMode={hardMode} />
         </div>
       </div>
 
@@ -70,6 +72,7 @@ export default function MobileLayout({
         onPlayAgain={onPlayAgain}
         gameState={active.gameState}
         target={active.target}
+        targetId={active.targetId}
         guesses={active.guesses}
         stats={active.stats}
         puzzleNum={puzzleNum}

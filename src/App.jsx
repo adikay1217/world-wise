@@ -4,7 +4,6 @@ import SearchBox from './components/SearchBox.jsx';
 import MapView from './components/MapView.jsx';
 import ProximityLegend from './components/ProximityLegend.jsx';
 import GuessList from './components/GuessList.jsx';
-import AiAgentFacts from './components/AiAgentFacts.jsx';
 import ResultModal from './components/ResultModal.jsx';
 import ShowResultButton from './components/ShowResultButton.jsx';
 import MobileLayout from './components/MobileLayout.jsx';
@@ -13,6 +12,7 @@ import { useEndlessGameState } from './hooks/useEndlessGameState.js';
 import { useFitScale } from './hooks/useFitScale.js';
 import { useAuth } from './hooks/useAuth.js';
 import { useIsMobile } from './hooks/useIsMobile.js';
+import { useHardMode } from './hooks/useHardMode.js';
 
 // Reference design size the whole game is laid out at; useFitScale scales
 // this single fixed composition uniformly to fit any viewport, so nothing
@@ -25,6 +25,7 @@ const STAGE_HEIGHT = 800;
 export default function App() {
   const { user, authReady, signIn, signOut, isConfigured } = useAuth();
   const [mode, setMode] = useState('daily');
+  const [hardMode, setHardMode] = useHardMode();
   const isMobile = useIsMobile();
   // Both modes stay mounted regardless of which is active (Rules of Hooks,
   // and it's cheap) — switching the toggle just swaps which one feeds the
@@ -55,6 +56,8 @@ export default function App() {
         onModeChange={setMode}
         dateLabel={dateLabel}
         puzzleNum={dailyGame.puzzleNum}
+        hardMode={hardMode}
+        onHardModeChange={setHardMode}
         user={user}
         authReady={authReady}
         isConfigured={isConfigured}
@@ -77,6 +80,8 @@ export default function App() {
           puzzleNum={dailyGame.puzzleNum}
           streak={active.stats.streak}
           guessCountLabel={`${active.guesses.length}/6`}
+          hardMode={hardMode}
+          onHardModeChange={setHardMode}
           user={user}
           authReady={authReady}
           isConfigured={isConfigured}
@@ -97,8 +102,7 @@ export default function App() {
           </div>
 
           <aside className="gc-sidebar">
-            <GuessList guesses={active.guesses} />
-            {active.gameOver && <AiAgentFacts targetId={active.targetId} />}
+            <GuessList guesses={active.guesses} hardMode={hardMode} />
           </aside>
         </div>
 
@@ -109,6 +113,7 @@ export default function App() {
           onPlayAgain={endlessGame.startNewRound}
           gameState={active.gameState}
           target={active.target}
+          targetId={active.targetId}
           guesses={active.guesses}
           stats={active.stats}
           puzzleNum={dailyGame.puzzleNum}

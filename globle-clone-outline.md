@@ -12,6 +12,9 @@ A country-guessing game inspired by Globle. Two ways to play:
 In both modes: click countries on the world map (or type a name in the
 search box); each guess is colored by proximity and shows the direction to
 the target, until the right country is found or you run out of guesses (6).
+**Hard mode** (toggle in the header, persisted locally) hides the direction
+arrow on every guess — a pure display toggle, so switching it mid-game
+retroactively hides/reveals arrows on guesses already made.
 
 ## Tech Stack
 - **Vite + React** (plain JS) — UI and game state.
@@ -69,18 +72,24 @@ the target, until the right country is found or you run out of guesses (6).
   (`src/hooks/useIsMobile.js` picks which branch renders).
 - **Share result**: a Wordle-style emoji-grid string copied to the clipboard,
   labeled with the puzzle number (daily) or "(Endless)".
-- **Post-game facts**: once a round ends (won or lost), a sidebar card
-  ("Facts about {country}", each stat sliding in in sequence) reveals
-  population, GDP, primary language(s), and neighboring countries for the
-  target (`src/components/AiAgentFacts.jsx`, data in
-  `src/data/countryFacts.js`). Stays visible even after closing the result
-  modal — persistent for the round, not tied to the modal being open. This
-  is real data (World Bank population/GDP + Wikidata official
-  languages/borders), not LLM-generated text, specifically to avoid
-  presenting hallucinated statistics as fact; see the header comment in
-  `countryFacts.js` for exact sourcing and the handful of manually-corrected
-  gaps (Taiwan/Falklands untracked by World Bank, North Korea's GDP
-  genuinely unreported, a couple of Wikidata official-language omissions).
+- **Post-game facts**: inside the win/loss modal itself (not the sidebar —
+  disappears when you close it, reappears if you reopen via "Show result"),
+  a card titled "Facts about {country}" reveals population, GDP, primary
+  language(s), and neighboring countries for the target, each stat sliding
+  in in sequence (`src/components/AiAgentFacts.jsx`, rendered from
+  `ResultModal.jsx`; data in `src/data/countryFacts.js`). This is real data
+  (World Bank population/GDP + Wikidata official languages/borders), not
+  LLM-generated text, specifically to avoid presenting hallucinated
+  statistics as fact; see the header comment in `countryFacts.js` for exact
+  sourcing and the handful of manually-corrected gaps (Taiwan/Falklands
+  untracked by World Bank, North Korea's GDP genuinely unreported, a couple
+  of Wikidata official-language omissions).
+- **Signing in before/during/after playing**: `useGameState`'s Firestore-sync
+  effect treats the cloud doc as the source of truth for everything except
+  a just-finished local round the cloud hasn't seen yet — signing in right
+  after playing as a guest folds that result into the cloud stats (correct
+  streak baseline, no double-count) instead of the cloud fetch silently
+  discarding it.
 
 ## Known small gaps
 - Endless stats don't sync to Firestore even when signed in (daily-only for
