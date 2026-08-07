@@ -8,6 +8,7 @@ import ResultModal from './components/ResultModal.jsx';
 import ShowResultButton from './components/ShowResultButton.jsx';
 import { useGameState } from './hooks/useGameState.js';
 import { useFitScale } from './hooks/useFitScale.js';
+import { useAuth } from './hooks/useAuth.js';
 
 // Reference design size the whole game is laid out at; useFitScale scales
 // this single fixed composition uniformly to fit any viewport, so nothing
@@ -16,7 +17,8 @@ const STAGE_WIDTH = 1280;
 const STAGE_HEIGHT = 800;
 
 export default function App() {
-  const game = useGameState();
+  const { user, authReady, signIn, signOut, isConfigured } = useAuth();
+  const game = useGameState(user);
   const scale = useFitScale(STAGE_WIDTH, STAGE_HEIGHT);
   const guessedIds = useMemo(() => new Set(game.guesses.map((g) => g.id)), [game.guesses]);
 
@@ -39,6 +41,11 @@ export default function App() {
           puzzleNum={game.puzzleNum}
           streak={game.stats.streak}
           guessCountLabel={`${game.guesses.length}/6`}
+          user={user}
+          authReady={authReady}
+          isConfigured={isConfigured}
+          onSignIn={signIn}
+          onSignOut={signOut}
         />
 
         <div className="gc-body">

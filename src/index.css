@@ -108,7 +108,7 @@ button {
 }
 .gc-header-row {
   display: flex;
-  align-items: baseline;
+  align-items: flex-start;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 12px;
@@ -146,6 +146,12 @@ button {
 }
 .gc-header-right {
   display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+.gc-header-stats {
+  display: flex;
   align-items: center;
   gap: 18px;
 }
@@ -159,6 +165,51 @@ button {
 .gc-guess-count span {
   color: var(--text-muted);
   font-weight: 500;
+}
+.gc-auth-signin {
+  background: var(--input-bg);
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  color: var(--text);
+  font: 600 12px 'Figtree', sans-serif;
+  padding: 7px 12px;
+  border-radius: 8px;
+}
+.gc-auth-signin:hover {
+  background: #f4ecdf;
+}
+.gc-auth-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.gc-auth-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.gc-auth-avatar-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent);
+  color: #fff;
+  font: 700 11px 'Figtree', sans-serif;
+}
+.gc-auth-name {
+  font: 600 13px 'Figtree', sans-serif;
+  color: var(--text);
+}
+.gc-auth-signout {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font: 500 12px 'Figtree', sans-serif;
+  text-decoration: underline;
+  padding: 0;
+}
+.gc-auth-signout:hover {
+  color: var(--text);
 }
 
 /* body layout */

@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import countries from '../data/countries.js';
 import { distKm, bearingDeg, distancePercent } from '../lib/geo.js';
 import { colorForPct, WIN_COLOR } from '../lib/color.js';
 import { todayKey, pickTarget, puzzleNumber } from '../lib/dailyPuzzle.js';
+import { db } from '../lib/firebase.js';
 
 const MAX_GUESSES = 6;
 const STATE_KEY = 'globle_state';
@@ -58,6 +60,24 @@ function loadStats() {
   return { streak: 0, played: 0, avg: '0.0', totalGuesses: 0, lastPlayed: null };
 }
 
+// Signed-in players get their stats stored in Firestore (`users/{uid}`) so
+// they follow across devices; signed-out play keeps using localStorage
+// exactly as before. Firestore failures fall back to whatever's already in
+// state rather than throwing, so a network hiccup can't break the game.
+function persistStats(stats, user) {
+  if (user && db) {
+    setDoc(doc(db, 'users', user.uid), stats).catch((err) => {
+      console.error('[stats] failed to save to Firestore:', err);
+    });
+    return;
+  }
+  try {
+    localStorage.setItem(STATS_KEY, JSON.stringify(stats));
+  } catch {
+    // storage unavailable — persistence is best-effort
+  }
+}
+
 function buildGuess(id, target, won) {
   const c = countries[id];
   const tgt = countries[target];
@@ -79,12 +99,43 @@ function buildGuess(id, target, won) {
   };
 }
 
-export function useGameState() {
+export function useGameState(user) {
   const dateKey = useMemo(() => todayKey(), []);
   const target = useMemo(() => pickTarget(countryIds, dateKey), [dateKey]);
 
   const [game, setGame] = useState(() => loadSaved(dateKey, target));
   const [stats, setStats] = useState(loadStats);
+
+  // Load stats for whichever identity is current: Firestore when signed in,
+  // localStorage otherwise. On a user's very first sign-in (no Firestore doc
+  // yet), seed their cloud doc from whatever's already in localStorage so
+  // guest progress isn't discarded.
+  useEffect(() => {
+    if (!user || !db) {
+      setStats(loadStats());
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const ref = doc(db, 'users', user.uid);
+        const snap = await getDoc(ref);
+        if (cancelled) return;
+        if (snap.exists()) {
+          setStats(snap.data());
+        } else {
+          const seed = loadStats();
+          await setDoc(ref, seed);
+          if (!cancelled) setStats(seed);
+        }
+      } catch (err) {
+        console.error('[stats] Firestore load failed, staying on local stats:', err);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   useEffect(() => {
     try {
@@ -127,11 +178,7 @@ export function useGameState() {
             avg: (totalGuesses / played).toFixed(1),
             lastPlayed: dateKey,
           };
-          try {
-            localStorage.setItem(STATS_KEY, JSON.stringify(next));
-          } catch {
-            // storage unavailable — persistence is best-effort
-          }
+          persistStats(next, user);
           return next;
         });
       }

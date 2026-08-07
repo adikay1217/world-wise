@@ -1,4 +1,16 @@
-export default function Header({ dateLabel, puzzleNum, streak, guessCountLabel }) {
+import AuthButton from './AuthButton.jsx';
+
+export default function Header({
+  dateLabel,
+  puzzleNum,
+  streak,
+  guessCountLabel,
+  user,
+  authReady,
+  isConfigured,
+  onSignIn,
+  onSignOut,
+}) {
   return (
     <header className="gc-header">
       <div className="gc-header-row">
@@ -15,9 +27,18 @@ export default function Header({ dateLabel, puzzleNum, streak, guessCountLabel }
           </div>
         </div>
         <div className="gc-header-right">
-          <div className="gc-streak">🔥 {streak}</div>
-          <div className="gc-guess-count">
-            Guesses <span>{guessCountLabel}</span>
+          <AuthButton
+            user={user}
+            authReady={authReady}
+            isConfigured={isConfigured}
+            onSignIn={onSignIn}
+            onSignOut={onSignOut}
+          />
+          <div className="gc-header-stats">
+            <div className="gc-streak">🔥 {streak}</div>
+            <div className="gc-guess-count">
+              Guesses <span>{guessCountLabel}</span>
+            </div>
           </div>
         </div>
       </div>
