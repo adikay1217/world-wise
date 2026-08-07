@@ -4,6 +4,7 @@ import SearchBox from './components/SearchBox.jsx';
 import MapView from './components/MapView.jsx';
 import ProximityLegend from './components/ProximityLegend.jsx';
 import GuessList from './components/GuessList.jsx';
+import AiAgentFacts from './components/AiAgentFacts.jsx';
 import ResultModal from './components/ResultModal.jsx';
 import ShowResultButton from './components/ShowResultButton.jsx';
 import { useGameState } from './hooks/useGameState.js';
@@ -71,7 +72,10 @@ export default function App() {
             <ProximityLegend />
           </div>
 
-          <GuessList guesses={active.guesses} />
+          <aside className="gc-sidebar">
+            <GuessList guesses={active.guesses} />
+            {active.gameOver && <AiAgentFacts targetId={active.targetId} />}
+          </aside>
         </div>
 
         <ResultModal

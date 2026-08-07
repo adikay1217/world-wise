@@ -61,6 +61,17 @@ the target, until the right country is found or you run out of guesses (6).
   ever requires scrolling to see, on any screen size.
 - **Share result**: a Wordle-style emoji-grid string copied to the clipboard,
   labeled with the puzzle number (daily) or "(Endless)".
+- **AI Agent briefing**: once a round ends (won or lost), a sidebar card
+  reveals population, GDP, primary language(s), and neighboring countries
+  for the target (`src/components/AiAgentFacts.jsx`, data in
+  `src/data/countryFacts.js`). Stays visible even after closing the result
+  modal — persistent for the round, not tied to the modal being open. This
+  is real data (World Bank population/GDP + Wikidata official
+  languages/borders), not LLM-generated text, specifically to avoid
+  presenting hallucinated statistics as fact; see the header comment in
+  `countryFacts.js` for exact sourcing and the handful of manually-corrected
+  gaps (Taiwan/Falklands untracked by World Bank, North Korea's GDP
+  genuinely unreported, a couple of Wikidata official-language omissions).
 
 ## Known small gaps
 - Endless stats don't sync to Firestore even when signed in (daily-only for

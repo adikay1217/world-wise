@@ -1,6 +1,6 @@
 export default function GuessList({ guesses }) {
   return (
-    <aside className="gc-sidebar">
+    <>
       <div className="gc-sidebar-title">Guess history</div>
       {guesses.length === 0 && (
         <div className="gc-sidebar-empty">Search or click a country on the map to make your first guess.</div>
@@ -21,6 +21,6 @@ export default function GuessList({ guesses }) {
           )}
         </div>
       ))}
-    </aside>
+    </>
   );
 }
