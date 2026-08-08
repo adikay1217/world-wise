@@ -470,6 +470,19 @@ button {
   border-left: 1px solid var(--border);
   background: var(--panel);
   padding: 20px;
+  /* margin-bottom, not padding: .gc-floating-actions is position:fixed over
+     the bottom-right corner of .gc-app — exactly where this sidebar (a
+     flex item stretched to the full body height) also extends. Padding
+     only buys extra internally-scrollable space at the *end* of the
+     content, which never actually clears the overlap since the sidebar's
+     own outer box still renders underneath the buttons regardless of how
+     much content it holds. A bottom margin, on the other hand, shrinks how
+     tall the stretched flex item is allowed to become in the first place,
+     so its rendered box — and therefore the facts card that can grow tall
+     inside it — stops short of the floating buttons instead of running
+     behind them. Whatever doesn't fit scrolls via overflow-y below.
+  */
+  margin-bottom: 96px;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -764,6 +777,9 @@ button {
   border: 1px solid var(--border);
   border-radius: 16px;
   padding: 16px;
+  /* Same reasoning as .gc-sidebar: keeps the facts card clear of the fixed
+     floating Show result / Play again bar at the bottom of the screen. */
+  padding-bottom: 80px;
   display: flex;
   flex-direction: column;
   gap: 10px;
