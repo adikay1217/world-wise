@@ -4,6 +4,7 @@ import SearchBox from './components/SearchBox.jsx';
 import MapView from './components/MapView.jsx';
 import ProximityLegend from './components/ProximityLegend.jsx';
 import GuessList from './components/GuessList.jsx';
+import AiAgentFacts from './components/AiAgentFacts.jsx';
 import ResultModal from './components/ResultModal.jsx';
 import ShowResultButton from './components/ShowResultButton.jsx';
 import MobileLayout from './components/MobileLayout.jsx';
@@ -103,6 +104,11 @@ export default function App() {
 
           <aside className="gc-sidebar">
             <GuessList guesses={active.guesses} hardMode={hardMode} />
+            {/* Mounts fresh (replaying its slide-in animation) specifically when
+                the modal closes, not simultaneously with it opening — while the
+                modal is open its own copy is what's visible; this one "pops up"
+                in the sidebar's original spot right as the modal goes away. */}
+            {active.gameOver && !active.showModal && <AiAgentFacts targetId={active.targetId} />}
           </aside>
         </div>
 

@@ -22,7 +22,13 @@ body,
 #root {
   height: 100%;
   margin: 0;
-  overflow: hidden;
+  /* Not overflow:hidden here (used to be) — on desktop, .gc-app renders
+     inside .gc-stage, which is position:fixed and covers the viewport on
+     its own, so there's nothing in normal document flow to scroll anyway.
+     On mobile, MobileLayout.jsx deliberately lays out content in normal
+     flow so the page scrolls (map -> guess list -> facts); overflow:hidden
+     up here blocked that entirely, silently clipping the guess list and
+     everything below the map off the bottom of the screen. */
 }
 
 body {
@@ -365,7 +371,14 @@ button {
   border: 1px solid rgba(0, 0, 0, 0.06);
   overflow: hidden;
   min-height: 320px;
-  touch-action: none;
+  /* touch-action is set inline (MapView.jsx), switching between allowing the
+     page to scroll through the map (zoomed out — there's nothing to pan) and
+     capturing the gesture for panning (zoomed in). user-select/touch-callout
+     stop a click-drag from highlighting map text or popping an iOS long-press
+     menu mid-drag. */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 .gc-tooltip {
   position: absolute;
@@ -523,6 +536,7 @@ button {
 }
 .gc-agent {
   margin-top: 8px;
+  margin-bottom: 22px;
   padding: 14px;
   border-radius: 12px;
   background: var(--panel);
@@ -566,6 +580,14 @@ button {
   border: 1px solid rgba(0, 0, 0, 0.08);
   padding: 4px 9px;
   border-radius: 999px;
+}
+.gc-agent-fact-fun {
+  padding-top: 10px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+.gc-agent-fact-fun .gc-agent-fact-value {
+  font-weight: 500;
+  line-height: 1.4;
 }
 
 /* modal */

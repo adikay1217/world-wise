@@ -3,6 +3,7 @@ import SearchBox from './SearchBox.jsx';
 import MapView from './MapView.jsx';
 import ProximityLegend from './ProximityLegend.jsx';
 import GuessList from './GuessList.jsx';
+import AiAgentFacts from './AiAgentFacts.jsx';
 import ResultModal from './ResultModal.jsx';
 import ShowResultButton from './ShowResultButton.jsx';
 
@@ -62,6 +63,7 @@ export default function MobileLayout({
 
         <div className="gc-m-sidebar">
           <GuessList guesses={active.guesses} hardMode={hardMode} />
+          {active.gameOver && !active.showModal && <AiAgentFacts targetId={active.targetId} />}
         </div>
       </div>
 

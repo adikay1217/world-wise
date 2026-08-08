@@ -141,6 +141,13 @@ export default function MapView({ guesses, gameState, targetId, onGuess }) {
     if (!vp) return;
 
     function onPointerDown(e) {
+      // Nothing to pan when fully zoomed out — the whole map already fits
+      // the viewport, and zoomAt snaps pan back to {0,0} at zoom <= 1. Only
+      // start tracking a drag once there's somewhere to actually pan to;
+      // otherwise leave the gesture alone so touch devices can scroll the
+      // page through the map (see the touch-action toggle below) instead of
+      // the map swallowing every swipe as a failed pan.
+      if (viewRef.current.zoom <= MIN_ZOOM) return;
       dragRef.current = {
         x: e.clientX,
         y: e.clientY,
@@ -184,6 +191,12 @@ export default function MapView({ guesses, gameState, targetId, onGuess }) {
       dragRef.current = drag?.moved ? drag : null;
       vp.style.cursor = 'grab';
       if (mapRef.current) mapRef.current.style.transition = '';
+      // A click-drag can leave the browser's native text/element selection
+      // highlighted across whatever the cursor passed over — clear it the
+      // moment the drag is released so the map doesn't stay visibly
+      // "selected".
+      const sel = window.getSelection?.();
+      if (sel && sel.rangeCount) sel.removeAllRanges();
     }
 
     function onPointerLeave() {
@@ -221,7 +234,15 @@ export default function MapView({ guesses, gameState, targetId, onGuess }) {
   }, []);
 
   return (
-    <div ref={viewportRef} className="gc-viewport" onClick={handleClick}>
+    <div
+      ref={viewportRef}
+      className="gc-viewport"
+      onClick={handleClick}
+      // Zoomed out: nothing to pan, so let a touch swipe fall through as a
+      // normal page scroll instead of the map eating it. Zoomed in: capture
+      // the gesture entirely for panning.
+      style={{ touchAction: view.zoom > MIN_ZOOM ? 'none' : 'pan-y' }}
+    >
       <div
         ref={mapRef}
         className="gc-map-inner"

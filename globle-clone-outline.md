@@ -51,13 +51,24 @@ retroactively hides/reveals arrows on guesses already made.
 - **Click hit-detection**: the SVG is injected once, imperatively, into the
   map container; a single delegated click listener resolves the clicked
   `<path>`/`<g>` id back to a country.
-- **Map zoom/pan**: wheel-to-zoom (toward the cursor) and drag-to-pan,
-  implemented with native DOM listeners rather than React state for the
-  parts that need to stay perfectly in sync with pointer position — see the
-  comments in `src/components/MapView.jsx` for the specific browser/React
-  quirks that forced that approach (StrictMode double-invoking state
-  updaters, `dangerouslySetInnerHTML` re-applying on every re-render,
-  `setPointerCapture` breaking click hit-testing).
+- **Map zoom/pan**: wheel-to-zoom (toward the cursor) and click/touch-drag-
+  to-pan, implemented with native DOM listeners rather than React state for
+  the parts that need to stay perfectly in sync with pointer position — see
+  the comments in `src/components/MapView.jsx` for the specific
+  browser/React quirks that forced that approach (StrictMode
+  double-invoking state updaters, `dangerouslySetInnerHTML` re-applying on
+  every re-render, `setPointerCapture` breaking click hit-testing).
+  Drag-panning only engages once the map is actually zoomed in (there's
+  nothing to pan at the default zoom, since the whole world already fits the
+  viewport) — below that, the viewport's `touch-action` allows the gesture
+  to fall through as a normal page scroll instead of capturing it, and
+  releasing a drag clears the browser's native text/element selection so
+  the map never looks "stuck" selected. This also fixed a real mobile bug:
+  `html`/`body` previously had `overflow: hidden` globally (meant for the
+  desktop fixed-stage layout, where it's a no-op since `.gc-stage` is
+  `position: fixed` and covers the viewport on its own), which on mobile
+  silently blocked the whole page from scrolling — clipping the guess list
+  and everything below the map off the bottom of the screen.
 - **Fit-to-screen layout (desktop/tablet)**: above the mobile breakpoint
   (700px), the whole game is laid out at a fixed 1280×800 reference size and
   uniformly scaled to fit any viewport (`src/hooks/useFitScale.js`), so
@@ -72,18 +83,26 @@ retroactively hides/reveals arrows on guesses already made.
   (`src/hooks/useIsMobile.js` picks which branch renders).
 - **Share result**: a Wordle-style emoji-grid string copied to the clipboard,
   labeled with the puzzle number (daily) or "(Endless)".
-- **Post-game facts**: inside the win/loss modal itself (not the sidebar —
-  disappears when you close it, reappears if you reopen via "Show result"),
-  a card titled "Facts about {country}" reveals population, GDP, primary
-  language(s), and neighboring countries for the target, each stat sliding
-  in in sequence (`src/components/AiAgentFacts.jsx`, rendered from
-  `ResultModal.jsx`; data in `src/data/countryFacts.js`). This is real data
+- **Post-game facts**: while the win/loss modal is open, a card titled
+  "Facts about {country}" reveals population, GDP, primary language(s),
+  neighboring countries, and a one-sentence "Did you know?" fun fact for the
+  target, each row sliding in in sequence
+  (`src/components/AiAgentFacts.jsx`, rendered from `ResultModal.jsx`; data
+  in `src/data/countryFacts.js` and `src/data/countryFunFacts.js`). Once the
+  modal is closed, the same card reappears in the sidebar in its original
+  spot (`App.jsx`/`MobileLayout.jsx` render it there whenever the round is
+  over and the modal isn't showing) — a fresh mount, so its slide-in
+  animation replays. Population/GDP/languages/neighbors are real data
   (World Bank population/GDP + Wikidata official languages/borders), not
   LLM-generated text, specifically to avoid presenting hallucinated
   statistics as fact; see the header comment in `countryFacts.js` for exact
   sourcing and the handful of manually-corrected gaps (Taiwan/Falklands
   untracked by World Bank, North Korea's GDP genuinely unreported, a couple
-  of Wikidata official-language omissions).
+  of Wikidata official-language omissions). The fun facts are hand-written
+  from well-established general knowledge rather than pulled from a
+  structured API (none exists for this kind of trivia), favoring safe,
+  widely-documented claims over obscure ones to keep the same accuracy bar
+  (`src/data/countryFunFacts.js`).
 - **Signing in before/during/after playing**: `useGameState`'s Firestore-sync
   effect treats the cloud doc as the source of truth for everything except
   a just-finished local round the cloud hasn't seen yet — signing in right

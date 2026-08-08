@@ -1,5 +1,6 @@
 import countries from '../data/countries.js';
 import countryFacts from '../data/countryFacts.js';
+import countryFunFacts from '../data/countryFunFacts.js';
 import { formatPopulation, formatGdp } from '../lib/format.js';
 
 const MAX_LANGUAGES_SHOWN = 4;
@@ -46,6 +47,12 @@ export default function AiAgentFacts({ targetId }) {
           <span className="gc-agent-fact-value">None — it's an island nation</span>
         )}
       </div>
+      {countryFunFacts[targetId] && (
+        <div className="gc-agent-fact gc-agent-fact-fun" style={{ animationDelay: `${STAGGER_MS * 5}ms` }}>
+          <span className="gc-agent-fact-label">Did you know?</span>
+          <span className="gc-agent-fact-value">{countryFunFacts[targetId]}</span>
+        </div>
+      )}
     </div>
   );
 }
